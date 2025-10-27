@@ -1,0 +1,1007 @@
+{
+  "openapi" : "3.1.0",
+  "tags" : [ {
+    "name" : "destinations"
+  }, {
+    "name" : "pipelines"
+  }, {
+    "name" : "sources"
+  }, {
+    "name" : "transforms"
+  }, {
+    "name" : "vaults"
+  } ],
+  "components" : {
+    "schemas" : {
+      "DatabaseType" : {
+        "type" : "string",
+        "enum" : [ "ORACLE", "MYSQL", "MARIADB", "SQLSERVER", "POSTGRESQL" ]
+      },
+      "Destination" : {
+        "type" : "object",
+        "required" : [ "type", "schema", "name" ],
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "schema" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "vaults" : {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/VaultReference"
+            }
+          },
+          "config" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "DestinationReference" : {
+        "type" : "object",
+        "required" : [ "name" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Pipeline" : {
+        "type" : "object",
+        "required" : [ "name", "source", "destination", "logLevel" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/SourceReference"
+          },
+          "destination" : {
+            "$ref" : "#/components/schemas/DestinationReference"
+          },
+          "transforms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TransformReference"
+            }
+          },
+          "logLevel" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        }
+      },
+      "Predicate" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "config" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "negate" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Signal" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignalCollectionVerifyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "databaseType" : {
+            "$ref" : "#/components/schemas/DatabaseType"
+          },
+          "hostname" : {
+            "type" : "string"
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "dbName" : {
+            "type" : "string"
+          },
+          "fullyQualifiedTableName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignalRequest" : {
+        "type" : "object",
+        "required" : [ "id", "type", "data" ],
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "data" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "additionalData" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          }
+        }
+      },
+      "SignalResponse" : {
+        "type" : "object",
+        "properties" : {
+          "signal" : {
+            "$ref" : "#/components/schemas/Signal"
+          }
+        }
+      },
+      "Source" : {
+        "type" : "object",
+        "required" : [ "type", "schema", "name" ],
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "schema" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "vaults" : {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/VaultReference"
+            }
+          },
+          "config" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "SourceReference" : {
+        "type" : "object",
+        "required" : [ "name" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Transform" : {
+        "type" : "object",
+        "required" : [ "type", "schema", "name" ],
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "schema" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "vaults" : {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/VaultReference"
+            }
+          },
+          "config" : {
+            "type" : "object",
+            "additionalProperties" : { }
+          },
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "predicate" : {
+            "$ref" : "#/components/schemas/Predicate"
+          }
+        }
+      },
+      "TransformReference" : {
+        "type" : "object",
+        "required" : [ "name" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Vault" : {
+        "type" : "object",
+        "required" : [ "name" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "plaintext" : {
+            "type" : "boolean"
+          },
+          "items" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "VaultReference" : {
+        "type" : "object",
+        "required" : [ "name" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      }
+    }
+  },
+  "paths" : {
+    "/api/destinations" : {
+      "post" : {
+        "summary" : "Creates new destination",
+        "tags" : [ "destinations" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Destination"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns all available destinations",
+        "tags" : [ "destinations" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Destination"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/destinations/{id}" : {
+      "put" : {
+        "summary" : "Updates an existing destination",
+        "tags" : [ "destinations" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Destination"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Destination"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns a destination with given id",
+        "tags" : [ "destinations" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Destination"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an existing destination",
+        "tags" : [ "destinations" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : { }
+        }
+      }
+    },
+    "/api/pipelines" : {
+      "post" : {
+        "summary" : "Creates new pipeline",
+        "tags" : [ "pipelines" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Pipeline"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns all available pipelines",
+        "tags" : [ "pipelines" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Pipeline"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pipelines/{id}" : {
+      "put" : {
+        "summary" : "Updates an existing pipeline",
+        "tags" : [ "pipelines" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Pipeline"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Pipeline"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns a pipeline with given id",
+        "tags" : [ "pipelines" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Pipeline"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an existing pipeline",
+        "tags" : [ "pipelines" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : { }
+        }
+      }
+    },
+    "/api/pipelines/{id}/logs" : {
+      "get" : {
+        "summary" : "Returns logs for pipeline with given id",
+        "tags" : [ "pipelines" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pipelines/{id}/signals" : {
+      "post" : {
+        "summary" : "Send signal to pipeline with given id",
+        "tags" : [ "pipelines" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Signal correctly sent to the pipeline",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignalResponse"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Pipeline not found"
+          }
+        }
+      }
+    },
+    "/api/sources" : {
+      "post" : {
+        "summary" : "Creates new source",
+        "tags" : [ "sources" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Source"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns all available sources",
+        "tags" : [ "sources" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Source"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sources/signals/verify" : {
+      "post" : {
+        "summary" : "Verify that signal data collection is configured correctly",
+        "tags" : [ "sources" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignalCollectionVerifyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sources/{id}" : {
+      "put" : {
+        "summary" : "Updates an existing source",
+        "tags" : [ "sources" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Source"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Source"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns a source with given id",
+        "tags" : [ "sources" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Source"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an existing source",
+        "tags" : [ "sources" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : { }
+        }
+      }
+    },
+    "/api/transforms" : {
+      "post" : {
+        "summary" : "Creates new transform",
+        "tags" : [ "transforms" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Transform"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns all available transformations",
+        "tags" : [ "transforms" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Transform"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transforms/{id}" : {
+      "put" : {
+        "summary" : "Updates an existing transform",
+        "tags" : [ "transforms" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Transform"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Transform"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns a transform with given id",
+        "tags" : [ "transforms" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Transform"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an existing transform",
+        "tags" : [ "transforms" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : { }
+        }
+      }
+    },
+    "/api/vaults" : {
+      "post" : {
+        "summary" : "Creates new vault",
+        "tags" : [ "vaults" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Vault"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns all available vaults",
+        "tags" : [ "vaults" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Vault"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vaults/{id}" : {
+      "put" : {
+        "summary" : "Updates an existing vault",
+        "tags" : [ "vaults" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Vault"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Vault"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get" : {
+        "summary" : "Returns a vault with given id",
+        "tags" : [ "vaults" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Vault"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an existing vault",
+        "tags" : [ "vaults" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : { }
+        }
+      }
+    }
+  },
+  "info" : {
+    "title" : "debezium-platform-conductor API",
+    "version" : "3.2.4.Final"
+  }
+}

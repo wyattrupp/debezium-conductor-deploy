@@ -22,10 +22,10 @@ jobs:
         uses: ./debezium-conductor-action
         with:
           environment: ${{ github.event.inputs.environment }}
-          conductor-url-dev: http://dev.mycorp.net/api/v1
-          conductor-url-stage: http://stage.mycorp.net/api/v1
-          conductor-url-prod: http://prod.mycorp.net/api/v1
-          api-token-dev: ${{ secrets.CONDUCTOR_TOKEN_DEV }}
+          conductor-url-dev: http://host.docker.internal:8080/api
+          conductor-url-stage: http://stage.mycorp.net/api
+          conductor-url-prod: http://prod.mycorp.net/api
+          api-token-dev: dummy-token
           api-token-stage: ${{ secrets.CONDUCTOR_TOKEN_STAGE }}
           api-token-prod: ${{ secrets.CONDUCTOR_TOKEN_PROD }}
           configs-root: configs

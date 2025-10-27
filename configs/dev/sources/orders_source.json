@@ -1,5 +1,5 @@
 {
-  "name": "association_source",
+  "name": "orders_source",
   "type": "postgres",
   "schema": "{}",
   "config": {
@@ -8,12 +8,12 @@
     "database.port": "5432",
     "database.user": "user",
     "database.password": "password",
-    "database.dbname": "postgres",
-    "database.server.name": "association_server",
-    "table.include.list": "public.association",
+    "database.dbname": "dw",
+    "database.server.name": "dw_server",
+    "table.include.list": "public.orders",
     "plugin.name": "pgoutput",
     "publication.autocreate.mode": "filtered",
-    "slot.name": "debezium_association",
+    "slot.name": "debezium_orders",
     "snapshot.mode": "initial",
     "decimal.handling.mode": "precise",
     "time.precision.mode": "adaptive",

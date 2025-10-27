@@ -39,13 +39,15 @@ echo "🌍 Environment: $ENVIRONMENT"
 echo "🔗 Conductor URL: $CONDUCTOR_URL"
 
 SOURCES_PATH="$CONFIGS_ROOT/$ENVIRONMENT/sources/*.json"
+DESTINATIONS_PATH="$CONFIGS_ROOT/$ENVIRONMENT/destinations/*.json"
 PIPELINES_PATH="$CONFIGS_ROOT/$ENVIRONMENT/pipelines/*.json"
 
 # === Initialize logs ===
 LOG_FILE="debezium_deploy_log.json"
-echo '{"sources":[],"pipelines":[],"rolled_back":[]}' > "$LOG_FILE"
+echo '{"sources":[],"destinations":[],"pipelines":[],"rolled_back":[]}' > "$LOG_FILE"
 
 NEW_SOURCES=()
+NEW_DESTINATIONS=()
 NEW_PIPELINES=()
 
 rollback() {
@@ -54,6 +56,12 @@ rollback() {
     echo "🧨 Deleting source: $src"
     curl -s -X DELETE -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/sources/$src" >/dev/null || true
     jq --arg s "$src" '.rolled_back += [{"type":"source","name":$s}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
+  done
+
+  for dest in "${NEW_DESTINATIONS[@]}"; do
+    echo "🧨 Deleting destination: $dest"
+    curl -s -X DELETE -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/destinations/$dest" >/dev/null || true
+    jq --arg d "$dest" '.rolled_back += [{"type":"destination","name":$d}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
   done
 
   for pipe in "${NEW_PIPELINES[@]}"; do
@@ -69,7 +77,7 @@ trap 'echo "❌ Error occurred. Initiating rollback..."; rollback; exit 1' ERR
 # === Validate configs ===
 echo "🧩 Validating configuration files..."
 VALID=true
-for file in $SOURCES_PATH $PIPELINES_PATH; do
+for file in $SOURCES_PATH $DESTINATIONS_PATH $PIPELINES_PATH; do
   [[ -f "$file" ]] || continue
   if ! jq empty "$file" >/dev/null 2>&1; then
     echo "❌ Invalid JSON: $file"
@@ -116,10 +124,14 @@ for file in $SOURCES_PATH; do
   SOURCE_NAME=$(jq -r '.name' "$file")
   echo "🔹 Processing source: $SOURCE_NAME"
 
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/sources/$SOURCE_NAME")
+  # Check if source exists by getting all sources and filtering by name
+  EXISTING_ID=$(curl -s -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/sources" | jq -r ".[] | select(.name==\"$SOURCE_NAME\") | .id")
 
-  if [[ "$STATUS" = "200" ]]; then
-    send_request "PUT" "$CONDUCTOR_URL/sources/$SOURCE_NAME" "$file" || exit 1
+  if [[ -n "$EXISTING_ID" ]]; then
+    # Add ID to the request body for update
+    jq --argjson id "$EXISTING_ID" '.id = $id' "$file" > "$file.tmp"
+    send_request "PUT" "$CONDUCTOR_URL/sources/$EXISTING_ID" "$file.tmp" || exit 1
+    rm "$file.tmp"
     jq --arg s "$SOURCE_NAME" '.sources += [{"name":$s,"action":"updated"}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
   else
     send_request "POST" "$CONDUCTOR_URL/sources" "$file" || exit 1
@@ -128,34 +140,73 @@ for file in $SOURCES_PATH; do
   fi
 done
 
+# === Register destinations ===
+echo "📤 Registering destinations..."
+for file in $DESTINATIONS_PATH; do
+  [[ -f "$file" ]] || continue
+  DEST_NAME=$(jq -r '.name' "$file")
+  echo "🔹 Processing destination: $DEST_NAME"
+
+  # Check if destination exists by getting all destinations and filtering by name
+  EXISTING_ID=$(curl -s -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/destinations" | jq -r ".[] | select(.name==\"$DEST_NAME\") | .id")
+
+  if [[ -n "$EXISTING_ID" ]]; then
+    # Add ID to the request body for update
+    jq --argjson id "$EXISTING_ID" '.id = $id' "$file" > "$file.tmp"
+    send_request "PUT" "$CONDUCTOR_URL/destinations/$EXISTING_ID" "$file.tmp" || exit 1
+    rm "$file.tmp"
+    jq --arg d "$DEST_NAME" '.destinations += [{"name":$d,"action":"updated"}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
+  else
+    send_request "POST" "$CONDUCTOR_URL/destinations" "$file" || exit 1
+    NEW_DESTINATIONS+=("$DEST_NAME")
+    jq --arg d "$DEST_NAME" '.destinations += [{"name":$d,"action":"created"}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
+  fi
+done
+
 # === Register pipelines ===
 echo "🔗 Registering pipelines..."
 for file in $PIPELINES_PATH; do
   [[ -f "$file" ]] || continue
   PIPE_NAME=$(jq -r '.name' "$file")
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/pipelines/$PIPE_NAME")
+  echo "🔹 Processing pipeline: $PIPE_NAME"
 
-  if [[ "$STATUS" = "200" ]]; then
-    send_request "PUT" "$CONDUCTOR_URL/pipelines/$PIPE_NAME" "$file" || exit 1
+  # Resolve source and destination IDs
+  SOURCE_NAME=$(jq -r '.source.name' "$file")
+  DEST_NAME=$(jq -r '.destination.name' "$file")
+  
+  SOURCE_ID=$(curl -s -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/sources" | jq -r ".[] | select(.name==\"$SOURCE_NAME\") | .id")
+  DEST_ID=$(curl -s -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/destinations" | jq -r ".[] | select(.name==\"$DEST_NAME\") | .id")
+  
+  if [[ -z "$SOURCE_ID" ]]; then
+    echo "❌ Source not found: $SOURCE_NAME"
+    exit 1
+  fi
+  
+  if [[ -z "$DEST_ID" ]]; then
+    echo "❌ Destination not found: $DEST_NAME"
+    exit 1
+  fi
+  
+  # Add source and destination IDs to pipeline config
+  jq --argjson sid "$SOURCE_ID" --argjson did "$DEST_ID" \
+    '.source.id = $sid | .destination.id = $did' "$file" > "$file.tmp"
+
+  # Check if pipeline exists by getting all pipelines and filtering by name
+  EXISTING_ID=$(curl -s -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/pipelines" | jq -r ".[] | select(.name==\"$PIPE_NAME\") | .id")
+
+  if [[ -n "$EXISTING_ID" ]]; then
+    # Add pipeline ID to the request body for update
+    jq --argjson id "$EXISTING_ID" '.id = $id' "$file.tmp" > "$file.tmp2"
+    send_request "PUT" "$CONDUCTOR_URL/pipelines/$EXISTING_ID" "$file.tmp2" || exit 1
+    rm "$file.tmp" "$file.tmp2"
     jq --arg p "$PIPE_NAME" '.pipelines += [{"name":$p,"action":"updated"}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
   else
-    send_request "POST" "$CONDUCTOR_URL/pipelines" "$file" || exit 1
+    send_request "POST" "$CONDUCTOR_URL/pipelines" "$file.tmp" || exit 1
+    rm "$file.tmp"
     NEW_PIPELINES+=("$PIPE_NAME")
     jq --arg p "$PIPE_NAME" '.pipelines += [{"name":$p,"action":"created"}]' "$LOG_FILE" > tmp.$$.json && mv tmp.$$.json "$LOG_FILE"
   fi
 done
 
-# === Trigger deployment ===
-echo "🚀 Triggering Watcher deployment..."
-DEPLOY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST -H "Authorization: Bearer $API_TOKEN" "$CONDUCTOR_URL/pipelines/deploy")
-BODY=$(echo "$DEPLOY_RESPONSE" | head -n1)
-CODE=$(echo "$DEPLOY_RESPONSE" | tail -n1)
-
-if [[ "$CODE" -ge 300 ]] || echo "$BODY" | jq -e '.error' >/dev/null 2>&1; then
-  echo "❌ Deployment failed"
-  rollback
-  exit 1
-fi
-
-echo "✅ Deployment triggered successfully!"
+echo "✅ Deployment complete!"
 echo "📝 Deployment log saved to $LOG_FILE"

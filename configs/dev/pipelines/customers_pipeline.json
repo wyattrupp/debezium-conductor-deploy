@@ -1,0 +1,11 @@
+{
+  "name": "customers_pipeline",
+  "source": {
+    "name": "customers_source"
+  },
+  "destination": {
+    "name": "customers_destination"
+  },
+  "transforms": [],
+  "logLevel": "INFO"
+}

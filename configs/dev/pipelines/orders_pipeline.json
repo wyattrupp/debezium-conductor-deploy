@@ -1,0 +1,11 @@
+{
+  "name": "orders_pipeline",
+  "source": {
+    "name": "orders_source"
+  },
+  "destination": {
+    "name": "orders_destination"
+  },
+  "transforms": [],
+  "logLevel": "INFO"
+}

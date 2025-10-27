@@ -1,21 +1,11 @@
 {
   "name": "association_pipeline",
-  "source": "association_source",
+  "source": {
+    "name": "association_source"
+  },
+  "destination": {
+    "name": "association_destination"
+  },
   "transforms": [],
-  "sink": {
-    "type": "kafka",
-    "config": {
-      "bootstrap.servers": "localhost:9092",
-      "topic": "association.events",
-      "key.converter": "io.confluent.connect.avro.AvroConverter",
-      "key.converter.schema.registry.url": "http://localhost:8081",
-      "key.converter.schemas.enable": true,
-      "value.converter": "io.confluent.connect.avro.AvroConverter",
-      "value.converter.schema.registry.url": "http://localhost:8081",
-      "value.converter.schemas.enable": true,
-      "compression.type": "snappy",
-      "acks": "all",
-      "retries": 3
-    }
-  }
+  "logLevel": "INFO"
 }
