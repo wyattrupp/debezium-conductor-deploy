@@ -1,0 +1,36 @@
+name: Deploy Debezium Connectors
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Select deployment environment"
+        required: true
+        options:
+          - dev
+          - stage
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy connectors to Debezium Platform
+        uses: ./debezium-conductor-action
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          conductor-url-dev: http://dev.mycorp.net/api/v1
+          conductor-url-stage: http://stage.mycorp.net/api/v1
+          conductor-url-prod: http://prod.mycorp.net/api/v1
+          api-token-dev: ${{ secrets.CONDUCTOR_TOKEN_DEV }}
+          api-token-stage: ${{ secrets.CONDUCTOR_TOKEN_STAGE }}
+          api-token-prod: ${{ secrets.CONDUCTOR_TOKEN_PROD }}
+          configs-root: configs
+      - name: Upload deployment log
+        uses: actions/upload-artifact@v3
+        with:
+          name: debezium-deploy-log
+          path: configs/$ENVIRONMENT/debezium_deploy_log.json

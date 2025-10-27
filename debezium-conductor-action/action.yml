@@ -1,0 +1,48 @@
+name: 'Debezium Conductor Register Action'
+description: >
+  Registers or updates Debezium Platform sources and pipelines for a given environment,
+  validates configs, and triggers Watcher deployment.
+author: 'Your Org'
+branding:
+  icon: 'database'
+  color: 'blue'
+
+inputs:
+  environment:
+    description: 'Deployment environment (e.g. dev, stage, prod)'
+    required: true
+  conductor-url-dev:
+    description: 'Conductor API URL for dev environment'
+    required: false
+  conductor-url-stage:
+    description: 'Conductor API URL for stage environment'
+    required: false
+  conductor-url-prod:
+    description: 'Conductor API URL for prod environment'
+    required: false
+  api-token-dev:
+    description: 'API token for dev'
+    required: false
+  api-token-stage:
+    description: 'API token for stage'
+    required: false
+  api-token-prod:
+    description: 'API token for prod'
+    required: false
+  configs-root:
+    description: 'Root directory containing configs/{env}/sources and configs/{env}/pipelines'
+    required: false
+    default: 'configs'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.environment }}
+    - ${{ inputs.conductor-url-dev }}
+    - ${{ inputs.conductor-url-stage }}
+    - ${{ inputs.conductor-url-prod }}
+    - ${{ inputs.api-token-dev }}
+    - ${{ inputs.api-token-stage }}
+    - ${{ inputs.api-token-prod }}
+    - ${{ inputs.configs-root }}
