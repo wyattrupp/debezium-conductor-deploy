@@ -1,0 +1,22 @@
+{
+  "name": "association_source",
+  "type": "postgresql",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "localhost",
+    "database.port": "5432",
+    "database.user": "user",
+    "database.password": "password",
+    "database.dbname": "postgres",
+    "database.server.name": "association_server",
+    "table.include.list": "public.association",
+    "plugin.name": "pgoutput",
+    "publication.autocreate.mode": "filtered",
+    "slot.name": "debezium_association",
+    "snapshot.mode": "initial",
+    "decimal.handling.mode": "precise",
+    "time.precision.mode": "adaptive",
+    "tombstones.on.delete": false,
+    "heartbeat.interval.ms": 30000
+  }
+}
